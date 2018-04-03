@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+  <meta name="description" content="" />
+  <meta name="author" content="" />
+<title>Insert title here</title>
+<!-- Bootstrap core CSS-->
+  <link th:href="@{/vendor/bootstrap/css/bootstrap.min.css}" rel="stylesheet" />
+  <!-- Custom fonts for this template-->
+  <link th:href="@{/vendor/font-awesome/css/font-awesome.min.css}" rel="stylesheet" type="text/css" />
+  <!-- Custom styles for this template-->
+  <link th:href="@{/css/sb-admin.css}" rel="stylesheet" />
+  <link th:href="@{/css/toastr.css}" rel="stylesheet" />
+ 
+</head>
+<body>
+
+ <script type="text/javascript"  th:src="@{/vendor/jquery/jquery.min.js}"></script>
+<h1>门票页面 </h1>
+	<form method="post">
+		<fieldset>
+			<legend>门票信息</legend>
+			
+<!--<input type="hidden" name="u_ID" th:value="${u_ID}" />  -->			
+			<label for="u_ID">用户ID:</label>
+			<input type="text" name="u_ID" id="u_ID" value="user1111111" readonly="readonly" /><br /><br />
+			<label for="pay_ID">付款ID:</label>
+			<input type="text" name="pay_ID" id="pay_ID" value="str1111111" readonly="readonly" /><br /><br />
+			<label for="site_ID">密码景点ID:</label>
+			<input type="text" name="site_ID" id="site_ID" value="50831" readonly="readonly" /><br /><br />
+			<label for="pay_amount">数量:</label>
+			<input type="text" name="pay_amount" id="pay_amount"  value="2" readonly="readonly" /><br /><br />
+			<label for="pay_price">价格:</label>
+			<input type="text" name="pay_price" id="pay_price" value="100" readonly="readonly" /><br /><br />
+			<label for="pay_code">付款码:</label>
+			<input type="text" name="pay_code" id="pay_code"  value="19650831" readonly="readonly" /><br /><br />
+			<input type="submit"  onclick="postJson();" value="确认提交" />
+		</fieldset>		
+	</form>
+	<script> 
+function postJson(){
+	var u_ID = $("#u_ID").val();
+	var pay_ID = $("#pay_ID").val();
+	var site_ID = $("#site_ID").val();
+	var pay_amount = parseInt($("#pay_amount").val());
+	var pay_price = $("#pay_price").val()*1;
+	var pay_code = $("#pay_code").val();
+            $.ajax({
+                cache:true,//保留缓存数据
+                type:"POST",//为post请求
+                contentType:'application/json',
+                url:"http://localhost:8803/oldneighborhood/sign/",//这是我在后台接受数据的文件名
+                data:JSON.stringify({
+        			"u_ID":u_ID,
+        			"pay_ID":pay_ID,
+        			"site_ID":site_ID,
+        			"pay_amount":pay_amount,
+        			"pay_price":pay_price,
+        			"pay_code":pay_code,
+        		}),
+        		dataType:"json",
+                async:true,//设置成true，这标志着在请求开始后，其他代码依然能够执行。如果把这个选项设置成false，这意味着所有的请求都不再是异步的了，这也会导致浏览器被锁死
+                success:function(data){//请求成功之后的操作
+                	console.log(data);
+		            var status = data.result;
+		            if (status == "error") {
+						
+					}else if (status == "success") {
+						
+                }
+            }
+        })
+}
+</script> 
+<!-- 
+	Bootstrap core JavaScript
+  <script src="/static/vendor/jquery/jquery.min.js"></script>
+  <script src="/static/js/toastr.min.js"></script>
+  <script src="/static/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+   Core plugin JavaScript
+  <script src="/static/vendor/jquery-easing/jquery.easing.min.js"></script>
+  <script src="/static/js/jquery.validate.min.js"></script>
+
+<script src="js/userinfo.js"></script>
+
+
+function postJson() { 
+	$.ajaxSetup({    
+	       contentType : 'application/json'    
+	   });
+	
+	$.ajax({   
+		  cache:true,//保留缓存数据
+          type:"POST",//为post请求
+          url:"http://localhost:8082/user/userinfo/{u_ID}(u_ID=${u_ID})",//这是我在后台接受数据的文件名   
+        data : document.getElementById('requesttext').value,   
+        success : onSuccessResult,   
+        error : onErrorResult  
+    });  
+      
+    return false;   
+  }
+}
+<script language="Javascript">
+
+        </script>
+        -->
+</body>
+
+
+</html>
+
