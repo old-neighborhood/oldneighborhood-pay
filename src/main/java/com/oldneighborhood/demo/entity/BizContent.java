@@ -2,15 +2,29 @@ package com.oldneighborhood.demo.entity;
 
 
 public class BizContent {
-	public String body = "";  
-    public String subject = "";  
-    public String  pay_ID= "";  
-    public String timeout_express = "";  
-    public String pay_amount = "";  
-    public String site_id = "";  
-    public String pay_code = "";  
-    public String u_ID = "";  
-    public double pay_price=0;
+	public String body;  
+    public String subject;  
+    public String  pay_ID;  
+    public String timeout_express;  
+    public String pay_amount;  
+    public String site_id;  
+    public String pay_code;  
+    public String u_ID;  
+    public double pay_price;
+    
+	public BizContent(String pay_ID, String pay_amount, String site_id, String pay_code, String u_ID, double pay_price) {
+		super();
+		body = "";
+		subject = "";
+		this.pay_ID= pay_ID;
+		timeout_express = "";
+		this.pay_amount = pay_amount;
+		this.site_id = site_id;
+		this.pay_code = pay_code;
+		this.u_ID = u_ID;
+		this.pay_price=pay_price;
+		// TODO Auto-generated constructor stub
+	}
 	public String getPay_ID() {
 		return pay_ID;
 	}

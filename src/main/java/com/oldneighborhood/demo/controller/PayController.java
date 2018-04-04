@@ -25,6 +25,8 @@ public class PayController extends AlipayAbstractController{
 	
 	@Autowired
 	private PayService payService;
+	
+	
 	    /** 
 	     * 对支付宝支付信息进行签名 
 	     *  
@@ -52,7 +54,7 @@ public class PayController extends AlipayAbstractController{
 					payInfo.getPay_code(), 
 					payInfo.getU_ID(),
 					payInfo.getPay_price());
-	    	return payService.aliPayPc(pay);  
+	    	return payService.aliPayPc(pay);
 	    }  
 	  
 	    /** 
