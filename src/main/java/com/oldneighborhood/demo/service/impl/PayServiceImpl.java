@@ -1,5 +1,6 @@
 package com.oldneighborhood.demo.service.impl;
 
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 
@@ -12,7 +13,9 @@ import java.util.Iterator;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
+import org.apache.struts2.ServletActionContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,10 +29,11 @@ import com.oldneighborhood.demo.entity.BizContent;
 import com.oldneighborhood.demo.entity.Pay;
 import com.oldneighborhood.demo.entity.PayInfo;
 import com.oldneighborhood.demo.service.PayService;
-
+import com.opensymphony.xwork2.ActionContext;
 import com.alipay.api.AlipayApiException;
 import com.alipay.api.AlipayClient;
 import com.alipay.api.AlipayResponse;
+import com.alipay.api.DefaultAlipayClient;
 import com.alipay.api.domain.AlipayTradeAppPayModel;
 import com.alipay.api.internal.util.AlipaySignature;
 import com.alipay.api.request.AlipayDataDataserviceBillDownloadurlQueryRequest;
@@ -50,68 +54,104 @@ import com.alipay.demo.trade.model.result.AlipayF2FRefundResult;
 import com.alipay.demo.trade.utils.ZxingUtils;
 
 @Service
-@Component
 public class PayServiceImpl implements PayService {
 	private static final Logger logger = LoggerFactory.getLogger(PayServiceImpl.class);
 	
+//	SpringBeanAutowiringSupport.processInjectionBasedOnCurrentContext(this);
 	
 	@Autowired
 	private PayDao payDao;
+	
+	@Autowired
+	private static ServletActionContext servletActionContext;
 	
 //	@Value("${sdk.alipay.notify-url}")
 //	private String notify_url;
 	
 	@Value("${sdk.alipay.app-id}")
-	private static String APP_ID ; 
+	private  String APP_ID ; 
 
 	private static String CHARSET = "utf-8";  
 	
 	@Value("${sdk.alipay.alipay-public-key}")
-	private static String ALIPAY_PUBLIC_KEY;
+	private  String ALIPAY_PUBLIC_KEY;
 	
 	@Value("${sdk.alipay.private-key}")
-	private static String APP_PRIVATE_KEY;
+	private  String APP_PRIVATE_KEY;
 	
 	@Value("${druid.url}")
-	private static String druid;
+	private  String druid;
+	
+	
 	
 	@Override
 	public String aliPayPc(Pay pay) throws AlipayApiException, UnsupportedEncodingException {
 		 SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");  
 	        String appID = APP_ID;  
-	        String bizContent = toJson(pay.Content);  
+//	        String bizContent = toJson(pay.Content);  
 	        String charset = CHARSET;  
 	        String method = "alipay.trade.app.pay";  
 	        String signType = "RSA2";  
 	        String timestamp = sdf.format(new Date());  
 	        String version = "1.0";  
+	        String gatewayUrl = "https://openapi.alipaydev.com/gateway.do";
 	        System.out.println(APP_ID+ALIPAY_PUBLIC_KEY+APP_PRIVATE_KEY+druid);
-	        String notify_url = "https://user/pay/notify";// 增加支付异步通知回调,记住上下notify_url的位置,全在sign_type之前,很重要,同样放在最后都不行  
-	        String content = "app_id=" + appID + "&biz_content=" + bizContent + "&charset=" + charset + "&method=" + method  
-	                + "&ify_url=" + notify_url + "&sign_type=" + signType + "&tamp=" + timestamp + "&version="  
-	                + version;  
-	  
-	        String sign = AlipaySignature.rsaSign(content, APP_PRIVATE_KEY, charset);  
-	        return "{\"Result\": \"app_id=" + encode(appID) + "&biz_content=" + encode(bizContent) + "&charset="  
-	                + encode(charset) + "&method=" + encode(method) + "&ify_url=" + encode(notify_url) + "&sign_type="  
-	                + encode(signType) + "×tamp=" + encode(timestamp) + "&version=" + encode(version) + "&sign="  
-	                + encode(sign) + "\"}";  
+	        String notify_url = "http://localhost:8803/oldneighborhood";// 增加支付异步通知回调,记住上下notify_url的位置,全在sign_type之前,很重要,同样放在最后都不行  
+	        String return_url = "http://localhost:8803/oldneighborhood/return_url.jsp";
+//	        String content = "app_id=" + appID + "&biz_content=" + bizContent + "&charset=" + charset + "&method=" + method  
+//	                + "&ify_url=" + notify_url + "&sign_type=" + signType + "&tamp=" + timestamp + "&version="  
+//	                + version;  
+	    	AlipayClient alipayClient = new DefaultAlipayClient(gatewayUrl, APP_ID, APP_PRIVATE_KEY, "json", charset, ALIPAY_PUBLIC_KEY, signType);
+	    	AlipayTradePagePayRequest alipayRequest = new AlipayTradePagePayRequest();
+	    	alipayRequest.setReturnUrl(return_url);
+	    	alipayRequest.setNotifyUrl(notify_url);
+	    	alipayRequest.setBizContent("{\"out_trade_no\":\""+ pay.Content.getPay_ID() +"\"," 
+	    			+ "\"total_amount\":\""+ pay.Content.getPay_price()+"\"," 
+	    			+ "\"subject\":\""+ pay.Content.getPay_code() +"\"," 
+	    			+ "\"body\":\""+ pay.Content.body +"\"," 
+	    			+ "\"product_code\":\"FAST_INSTANT_TRADE_PAY\"}");  
+	    	String form = alipayClient.pageExecute(alipayRequest).getBody();
+	    	System.out.println(alipayClient.pageExecute(alipayRequest).getBody());
+	    	HttpServletResponse httpResponse =  getResponse();
+	    	httpResponse.setContentType("text/html;charset=" + charset);
+	    	try {
+				httpResponse.getWriter().write(form);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}//直接将完整的表单html输出到页面
+	    	try {
+				httpResponse.getWriter().flush();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} 
+	        return "";
+//{\"Result\": \"app_id=" + encode(appID) + "&biz_content=" + encode(bizContent) + "&charset="  
+//	                + encode(charset) + "&method=" + encode(method) + "&ify_url=" + encode(notify_url) + "&sign_type="  
+//	                + encode(signType) + "×tamp=" + encode(timestamp) + "&version=" + encode(version) + "&sign="  
+//	                + encode(sign) + "\"}";  
 	    }  
-	  
-	    private String encode(String sign) throws UnsupportedEncodingException {  
-	        return URLEncoder.encode(sign, "utf-8").replace("+", "%20");  
-	    }  
-	  
-	    private String toJson(BizContent content) {  
-	        String context = "";  
-	        context += "{" + "\"timeout_express\":\"" + content.timeout_express + "\"," + "\"seller_id\":\""  
-	                + content.site_id + "\"," + "\"product_code\":\"" + content.pay_code + "\","  
-	                + "\"total_amount\":\"" + content.pay_amount + "\"," + "\"subject\":\"" + content.subject + "\","  
-	                + "\"body\":\"" + content.body + "\"," + "\"out_trade_no\":\"" + content.pay_ID + "\","
-	                +"\"u_ID\":\""+content.u_ID+"\","+"\"pay_price\":\""+content.pay_price+"\"}";  
-	  
-	        return context;  
+	
+	private static HttpServletResponse getResponse() {
+		HttpServletResponse response=servletActionContext.getResponse();
+		return response;
 	}
+	  
+//	    private String encode(String sign) throws UnsupportedEncodingException {  
+//	        return URLEncoder.encode(sign, "utf-8").replace("+", "%20");  
+//	    }  
+//	  
+//	    private String toJson(BizContent content) {  
+//	        String context = "";  
+//	        context += "{" + "\"timeout_express\":\"" + content.timeout_express + "\"," + "\"seller_id\":\""  
+//	                + content.site_id + "\"," + "\"product_code\":\"" + content.pay_code + "\","  
+//	                + "\"total_amount\":\"" + content.pay_amount + "\"," + "\"subject\":\"" + content.subject + "\","  
+//	                + "\"body\":\"" + content.body + "\"," + "\"out_trade_no\":\"" + content.pay_ID + "\","
+//	                +"\"u_ID\":\""+content.u_ID+"\","+"\"pay_price\":\""+content.pay_price+"\"}";  
+//	  
+//	        return context;  
+//	}
 
 
 	@Override
